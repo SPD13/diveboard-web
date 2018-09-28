@@ -951,6 +951,7 @@ class DiveinfoController < ApplicationController
       respond_to do |format|
         format.zxl { render :text => d.toZXL }
         format.udcf { render :text => d.toUDCF(true) }
+        format.uddf { render :text => d.toUDDF(true) }
       end
 
     rescue DBException => e

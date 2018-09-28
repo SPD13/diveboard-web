@@ -7,6 +7,7 @@ Mime::Type.register "image/svg+xml", :svg
 Mime::Type.register "image/png", :png 
 Mime::Type.register "application/x-zxl", :zxl 
 Mime::Type.register "application/x-udcf", :udcf
+Mime::Type.register "application/x-uddf", :uddf
 Mime::Type.register "application/ms-excel", :xls 
 Mime::Type.register "video/mp4", :mp4
 Mime::Type.register "video/webm", :webm 

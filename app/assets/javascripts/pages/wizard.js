@@ -652,6 +652,9 @@ function bulk_wizard_set_ui()
       case 'wizard_export_udcf':
           request_export_udcf();
           break;
+      case 'wizard_export_uddf':
+          request_export_uddf();
+          break;
       case 'wizard_bulk_print':
           $("#bulk_print_format").val("a5-2");
           $("#bulk_print_pictures").val("-1");
@@ -3094,7 +3097,7 @@ function setup_upload_udcf_file(){
     onComplete: function(id, fileName, responseJSON){
       if (responseJSON["success"] == "false" ||responseJSON["success"] == false|| responseJSON["success"] == undefined) {
         $(".qq-upload-failed-text").show();
-        diveboard.notify(I18n.t(["js","wizard","Profile upload"]), I18n.t(["js","wizard","Sorry, the file you uploaded was not recognised. Diveboard currently only supports UDCF, DAN DL7, Uwatec ASD, Suunto SDE or Cressi txt files.<br/><br/><b>Scubapro/Uwatec SmartTrak users:</b><br/>Please note that if you're using <b>SmartTrak version 2.08</b> you need to upgrade to 2.0801 from <a href='http://www.scubapro.com' target='_blank'>scubapro.com</a>."]));
+        diveboard.notify(I18n.t(["js","wizard","Profile upload"]), I18n.t(["js","wizard","Sorry, the file you uploaded was not recognised. Diveboard currently only supports UDCF, UDDF, DAN DL7, Uwatec ASD, Suunto SDE or Cressi txt files.<br/><br/><b>Scubapro/Uwatec SmartTrak users:</b><br/>Please note that if you're using <b>SmartTrak version 2.08</b> you need to upgrade to 2.0801 from <a href='http://www.scubapro.com' target='_blank'>scubapro.com</a>."]));
       }else{
         console.log($(".qq-upload-list"));
         wizard_dive_all_summary = responseJSON["dive_summary"];
@@ -3529,6 +3532,10 @@ function request_export_zxl() {
 
 function request_export_udcf() {
   request_export("udcf");
+}
+
+function request_export_uddf() {
+	request_export("uddf");
 }
 
 function request_bulk_privacy(privacy){

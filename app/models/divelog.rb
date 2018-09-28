@@ -1096,6 +1096,117 @@ class Divelog
 
   end
 
+def dive_to_UDDF(dive, interval, indent=false)
+
+    if dive.nil? then return end
+
+    #Information before dive
+    uddf = "\t\t\t<dive>\n"
+    if interval > 24*60*60
+      uddf += "\t\t\t\t<surfaceintervalbeforedive>\n"
+      uddf += "\t\t\t\t\t<infinity/>\n"
+      uddf += "\t\t\t\t</surfaceintervalbeforedive>\n"
+    else
+      uddf += "\t\t\t\t<surfaceintervalbeforedive>\n"
+      uddf += "\t\t\t\t\t<passedtime>"+interval.to_s+"</passedtime>\n"
+      uddf += "\t\t\t\t</surfaceintervalbeforedive>\n"
+    end
+    uddf += "\t\t\t\t<informationbeforedive>\n"
+    uddf += "\t\t\t\t\t<divenumber>"+dive["number"].to_s+"</divenumber>\n"
+    uddf += "\t\t\t\t\t<datetime>"+dive["beginning"].strftime("%Y-%m-%dT%H:%M:%S")+"</datetime>\n"
+    if dive["spot_id"] != nil
+      uddf += "\t\t\t\t\t<link ref=\"site-"+dive["spot_id"].to_s+"\"/>\n"
+    end
+    if dive["trip_id"] != nil
+      uddf += "\t\t\t\t\t<link ref=\"trip-"+dive["trip_id"].to_s+"\"/>\n"
+    end
+    uddf += "\t\t\t\t</informationbeforedive>\n"
+
+    if dive['tanks'].blank? then
+      uddf += "\t\t\t\t<tankdata>\n"
+      uddf += "\t\t\t\t\t<link ref=\"air\"/>\n"
+      uddf += "\t\t\t\t\t<tankpressurebegin>0.00</tankpressurebegin>\n"
+      uddf += "\t\t\t\t\t<tankpressureend>0.00</tankpressureend>\n"
+      uddf += "\t\t\t\t</tankdata>\n"
+    else
+      uddf += "\t\t\t\t<tankdata>\n"
+      begin
+        dive['tanks'].each_with_index do |tank, idx|
+          uddf += "\t\t\t\t\t<link ref=\"#{dive['internal_sequence']}-#{idx+1}\"/>\n"
+          uddf += "\t\t\t\t\t<tankvolume>#{tank['volume']*tank['multitank']}</tankvolume>\n"
+          uddf += "\t\t\t\t\t<tankpressurebegin>#{tank['p_start']}</tankpressurebegin>\n"
+          uddf += "\t\t\t\t\t<tankpressureend>#{tank['p_end']}</tankpressureend>\n"
+        end
+      rescue
+        Rails.logger.error "Failed to export tanks to UDDF: #{$!.message}"
+        Rails.logger.debug $!.backtrace.join "\n"
+      end
+      uddf += "\t\t\t\t</tankdata>\n"
+    end
+
+
+    #Dive info
+    uddf += "\t\t\t\t<samples>\n"
+    previous_gas = 0
+    dive["sample"].each { |sample|
+      uddf += "\t\t\t\t\t<waypoint>\n"
+      if sample['gas_switch']!=previous_gas
+        gas_name = "air";
+        if dive['tanks'].count()>=sample['gas_switch'].to_f
+          if dive['tanks'][sample['gas_switch']-1].gas == "custom"
+            gas_name = "gas-#{dive['internal_sequence'].to_s}-#{sample['gas_switch'].to_s}"
+          else
+            gas_name = dive['tanks'][sample['gas_switch']-1].gas
+          end
+        end
+        uddf += "\t\t\t\t\t\t<switchmix ref=\"#{gas_name}\"/>\n"
+        previous_gas = sample['gas_switch']
+      end
+      uddf += "\t\t\t\t\t\t<divetime>"+sample["time"].to_s+"</divetime>\n"
+      uddf += "\t\t\t\t\t\t<depth>"+sample["depth"].to_s+"</depth>\n"
+      if sample["temperature"] != nil
+        uddf += "\t\t\t\t\t\t<temperature>"+sample["temperature"].to_s+"</temperature>\n"
+      end
+      if sample["main_cylinder_pressure"] != nil
+        uddf += "\t\t\t\t\t\t<tankpressure>"+sample["main_cylinder_pressure"].to_s+"</tankpressure>\n"
+      end
+      #Alarms
+      if !sample["ascent_violation"].nil? && sample["ascent_violation"] == "T" then
+        uddf += "\t\t\t\t\t\t<alarm>ascent</alarm>\n"
+      end
+      if !sample["deco_start"].nil? && sample["deco_start"] == "T" then
+        uddf += "\t\t\t\t\t\t<alarm>deco</alarm>\n"
+      end
+      if !sample["surface_event"].nil? && sample["surface_event"] == "T" then
+        uddf += "\t\t\t\t\t\t<alarm>surface</alarm>\n"
+      end
+
+      uddf += "\t\t\t\t\t</waypoint>\n"
+    }
+    uddf += "\t\t\t\t</samples>\n"
+
+    #Information after dive
+    uddf += "\t\t\t\t<informationafterdive>\n"
+    if dive["min_water_temp"] != nil
+      uddf += "\t\t\t\t\t<lowesttemperature>"+dive["min_water_temp"].to_s+"</lowesttemperature>\n"
+    end
+    if dive["maxdepth"] != nil
+      uddf += "\t\t\t\t\t<greatestdepth>"+dive["maxdepth"].to_s+"</greatestdepth>\n"
+    end
+    uddf += "\t\t\t\t\t<notes><para>"+dive["dive_comments"].to_s+"</para></notes>\n"
+    uddf += "\t\t\t\t</informationafterdive>\n"
+    
+    uddf += "\t\t\t</dive>\n"
+  
+    if indent == false
+      Rails.logger.debug "returning non-indented UDDF file "
+      return uddf.gsub("\t","").gsub("\n","").upcase
+    else
+      Rails.logger.debug "returning indented UDDF file "
+      return uddf
+    end
+
+  end
 
   def toUDCF(indent=false)
 
@@ -1103,7 +1214,7 @@ class Divelog
       return nil
     end
 
-    udcf = "<profile udcf='1'>\n"
+    udcf = "<profile>\n"
     udcf += "\t<units>metric</units>\n"
     udcf += "\t<device>"
     udcf += "\t\t<vendor>Diveboard</vendor>"
@@ -1125,6 +1236,108 @@ class Divelog
       Rails.logger.debug "returning cleanly indented UDCF file probably for export using METRIC units(WTF)"
       Rails.logger.debug udcf
       return udcf
+    end
+  end
+  
+  def toUDDF(indent=false)
+  
+    if @dives.nil? then
+      return nil
+    end
+  
+    uddf = "<uddf version=\"3.2.1\">\n"
+    uddf += "\t<generator>\n"
+    uddf += "\t\t<name>Diveboard</name>\n"
+    uddf += "\t\t<type>logbook</type>\n"
+    uddf += "\t\t<manufacturer><name>Diveboard</name></manufacturer>\n"
+    uddf += "\t\t<datetime>"+Time.now.strftime("%Y-%m-%dT%H:%M:%S")+"</datetime>\n"
+    uddf += "\t</generator>\n"
+    uddf += "\t<divesite>\n"
+    spots = []
+    @dives.each { |dive|
+        if dive['spot_id'] != nil && !spots.include?(dive['spot_id'])
+          uddf += "\t\t<site id=\"site-#{dive['spot_id'].to_s}\">\n"
+          uddf += "\t\t\t<geography>\n"
+          uddf += "\t\t\t\t<address>\n"
+          uddf += "\t\t\t\t\t<country>#{dive['spot_country']}</country>\n"
+          uddf += "\t\t\t\t</address>\n"
+          uddf += "\t\t\t\t<location>#{dive['spot_location_name']}</location>\n"
+          uddf += "\t\t\t\t<latitude>#{dive['spot_lat']}</latitude>\n"
+          uddf += "\t\t\t\t<longitude>#{dive['spot_long']}</longitude>\n"
+          uddf += "\t\t\t</geography>\n"
+          uddf += "\t\t</site>\n"
+          spots.push(dive['spot_id'])
+        end
+        }
+    uddf += "\t</divesite>\n"
+    uddf += "\t<divetrip>\n"
+    trips = []
+    @dives.each { |dive|
+        if dive['trip_id'] != nil && !trips.include?(dive['trip_id'])
+          uddf += "\t\t<trip id=\"trip-#{dive['trip_id'].to_s}\">\n"
+          uddf += "\t\t\t<name>#{dive['trip_name']}</name>\n"
+          uddf += "\t\t</trip>\n"
+          trips.push(dive['trip_id'])
+        end
+        }
+    uddf += "\t</divetrip>\n"
+    uddf += "\t<gasdefinitions>\n"
+    uddf += "\t\t<mix id=\"air\">\n"
+    uddf += "\t\t\t<name>air</name>\n"
+    uddf += "\t\t\t<o2>0.21</o2>\n"
+    uddf += "\t\t\t<n2>0.79</n2>\n"
+    uddf += "\t\t</mix>\n"
+    uddf += "\t\t<mix id=\"EANx32\">\n"
+    uddf += "\t\t\t<name>EANx32</name>\n"
+    uddf += "\t\t\t<o2>0.32</o2>\n"
+    uddf += "\t\t\t<n2>0.68</n2>\n"
+    uddf += "\t\t</mix>\n"
+    uddf += "\t\t<mix id=\"EANx36\">\n"
+    uddf += "\t\t\t<name>EANx36</name>\n"
+    uddf += "\t\t\t<o2>0.36</o2>\n"
+    uddf += "\t\t\t<n2>0.64</n2>\n"
+    uddf += "\t\t</mix>\n"
+    uddf += "\t\t<mix id=\"EANx40\">\n"
+    uddf += "\t\t\t<name>EANx40</name>\n"
+    uddf += "\t\t\t<o2>0.40</o2>\n"
+    uddf += "\t\t\t<n2>0.60</n2>\n"
+    uddf += "\t\t</mix>\n"
+    @dives.each { |dive|
+      dive['tanks'].each_with_index do |tank, idx|
+        uddf += "\t\t<mix id=\"gas-#{dive['internal_sequence'].to_s}-#{(idx+1).to_s}\">\n"
+        uddf += "\t\t\t<o2>#{tank['o2']}</o2>\n"
+        uddf += "\t\t\t<n2>#{tank['n2']}</n2>\n"
+        uddf += "\t\t\t<he>#{tank['he']}</he>\n"
+        uddf += "\t\t</mix>"
+      end
+    }
+    uddf += "\t</gasdefinitions>\n"
+    uddf += "\t<profiledata>\n"
+    last_dive_time = 0;
+    rg_id = 0;
+    @dives.each { |dive|
+      interval = dive['beginning']-last_dive_time
+      if interval.to_f < 24*60*60
+        uddf += "\t\t<repetitiongroup id=\"rg-#{rg_id}\">\n"
+      end
+      uddf += dive_to_UDDF(dive, interval.to_f, indent)
+      if interval.to_f < 24*60*60
+        uddf += "\t\t</repetitiongroup>\n"
+        rg_id += 1
+      end
+      last_dive_time = dive['beginning']
+    }
+    uddf += "\t</profiledata>\n"
+  
+    uddf += "</uddf>"
+    if indent == false
+      Rails.logger.debug "returning non-indented UDDF file "
+      Rails.logger.debug uddf.gsub("\t","").gsub("\n","").upcase
+      return uddf.gsub("\t","").gsub("\n","").upcase
+    else
+      Rails.logger.debug "returning cleanly indented UDDF file"
+      Rails.logger.debug uddf
+      return uddf
     end
   end
 
@@ -2286,7 +2499,9 @@ class Divelog
 
       dive_h = {}
 
+      Rails.logger.debug dive
       dive_h["internal_sequence"] = dive_id
+      dive_h["number"] = dive.number
       dive_h["beginning"] = dive.time_in
       dive_h["maximum_depth"] = dive.maxdepth.to_f
       dive_h["duration"] = dive.duration.to_f*60
@@ -2307,6 +2522,16 @@ class Divelog
         dive_h["location"] = "UnknownPlace, Unknown Location, Unknown Country"
       else
         dive_h["location"] = "#{dive.spot.name}, #{dive.spot.location.name}, #{dive.spot.country.cname}"
+        dive_h["spot_id"] = "#{dive.spot.id}"
+        dive_h["spot_country"] = "#{dive.spot.country.cname}"
+        dive_h["spot_name"] = "#{dive.spot.name}"
+        dive_h["spot_location_name"] = "#{dive.spot.location.name}"
+        dive_h["spot_lat"] = "#{dive.spot.lat}"
+        dive_h["spot_long"] = "#{dive.spot.long}"
+      end
+      if dive.trip_id != nil
+        dive_h["trip_id"] = dive.trip.id
+        dive_h["trip_name"] = dive.trip.name
       end
       ## TODO : add diver name, add dive location
 
@@ -2338,6 +2563,7 @@ class Divelog
           'material' => tank.material,
           'volume' => tank.volume,
           'multitank' => tank.multitank,
+          'gas' => tank.gas,
           'o2' => o2,
           'n2' => n2,
           'he' => he,
