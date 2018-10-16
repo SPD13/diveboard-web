@@ -555,6 +555,7 @@ zh-CN:
       : "例如：夏威夷 2011"
       ? "ERROR: Cannot Save. Please correct the fields highlighted in red"
       : "错误: 无法保存。请更正以红色突出显示的字段"
+      Select: Select
       ? "Error loading image"
       : 加载图像出错
       ? "Example : White River, Cyprus"

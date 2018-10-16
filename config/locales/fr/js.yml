@@ -569,6 +569,7 @@ fr:
       : "Ex. République Dominicaine 2013"
       ? "ERROR: Cannot Save. Please correct the fields highlighted in red"
       : "ERREUR : Sauvegarde impossible. Merci de corriger les champs marqués de rouge."
+      Select: Selectionner
       ? "Error loading image"
       : "Erreur au chargement de l'image"
       ? "Example : White River, Cyprus"

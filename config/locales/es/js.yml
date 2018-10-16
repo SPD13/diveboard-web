@@ -567,6 +567,7 @@ es:
       : "Ej: Hawai 2011"
       ? "ERROR: Cannot Save. Please correct the fields highlighted in red"
       : "ERROR: No se puede guardar. Por favor corrija los campos resaltados en rojo"
+      Select: Select
       ? "Error loading image"
       : "Error cargando imagen"
       ? "Example : White River, Cyprus"
