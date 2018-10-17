@@ -41,7 +41,7 @@
 		  <tr>
           <td class="wizard_input_label">
           <label>
-          <%= it("Location:", scope: ['diveinfo', 'location_editor']) %>
+          <%= it("Location:", scope: ['diveinfo', 'location_editor']) %> *
           </label>
           </td>
           <td>
@@ -51,7 +51,7 @@
 		  <tr>
           <td class="wizard_input_label">
           <label>
-          <%= it("Spot Name:", scope: ['diveinfo', 'location_editor']) %>
+          <%= it("Spot Name:", scope: ['diveinfo', 'location_editor']) %> *
           </label>
           </td>
           <td>
@@ -87,7 +87,7 @@
           </label>
           </td>
           <td>
-          <div id="wizard_simmilar_spots_loader" style="display: none;"><img src="/img/transparent_loader_2.gif" height='66px' width='66px' style="margin-left:50%; margin-top:25%;" alt='#' /></div>
+          <div id="wizard_simmilar_spots_loader" style="display: none;"><img src="/img/transparent_loader_2.gif" height='66px' width='66px' alt='#' /></div>
           <div id="wizard_simmilar_spots" style="height:100px;overflow-y:auto;"></div>
           </td>
           </tr>
@@ -95,6 +95,7 @@
         </tbody>
         </table>
         <p>
+        	<button class='yellow_button' id='wizard_spot_search'><%= it("Search", scope: ['diveinfo', 'location_editor']) %></button>
         	<button class='yellow_button' id='wizard_spot_confirm'><%= it("Confirm", scope: ['diveinfo', 'location_editor']) %></button>
           	<button class='yellow_button' id='wizard_spot_cancel'><%= it("Cancel", scope: ['diveinfo', 'location_editor']) %></button>
         </p>
