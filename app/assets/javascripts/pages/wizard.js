@@ -3,6 +3,7 @@ var G_facebook_buddy_search_init = false;
 var image_resizer;
 var new_spot_searched = false;
 var gmap_markers_simmilar = [];
+var marker_simmilar_highlight = null;
 // if wizard_bulk == true => we're here to bulk create upload
 // if false it's a one-dive creation
 
@@ -328,7 +329,7 @@ function set_wizard_bindings(){
 	        	spots = $.map(data.data, function(item){return {label: item.name , value: item.name, id: item.id, lat: item.data.lat, lng: item.data.lng } })
 	        	res = "<table>";
 	        	spots.forEach(function(element) {
-	        		res += "<tr><td>"+element.label+"</td><td><button class='yellow_button' onClick='select_spot("+element.id+")'>"+I18n.t(["js","wizard","Select"])+"</button></td></tr>";
+	        		res += "<tr onmouseover='wizard_gmaps_simmilar_highlightspot("+element.lat+","+element.lng+")' onmouseout='wizard_gmaps_simmilar_highlightspotclear()' class='spot_simmilar'><td>"+element.label+"</td><td><button class='yellow_button' onClick='select_spot("+element.id+")'>"+I18n.t(["js","wizard","Select"])+"</button></td></tr>";
 		        	wizard_gmaps_simmilar_spots(element.lat, element.lng, element.id);
 	        	});
 	        	res += "</table>";
@@ -2708,6 +2709,35 @@ try {
   } catch(e){
 	  console.log(e.message);
   }
+}
+
+function wizard_gmaps_simmilar_highlightspot(lat, lng) {
+	try {
+	    var image = new google.maps.MarkerImage('/img/ok.png',
+	    	      new google.maps.Size(15, 15),
+	    	      new google.maps.Point(0,0),
+	    	      new google.maps.Point(7, 7)
+	    	    );
+	    var myLatLng = new google.maps.LatLng(lat,lng);
+	    marker_simmilar_highlight = new google.maps.Marker({
+	        position: myLatLng,
+	        map: map,
+	        icon: image,
+	        draggable: false
+	      });
+	  } catch(e){
+		  console.log(e.message);
+	  }
+}
+
+function wizard_gmaps_simmilar_highlightspotclear() {
+	try {
+	    if (marker_simmilar_highlight) {
+	    	marker_simmilar_highlight.setMap(null);
+	    }
+	  } catch(e){
+		  console.log(e.message);
+	  }
 }
 
 function wizard_gmaps_clear_simmilar_spots() {
