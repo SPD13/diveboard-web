@@ -60,6 +60,13 @@ module SearchHelper
         keywords.push("#{term}")
       end
     end
+    
+    location_keywords = []
+    location_name.split(" ").each do |term|
+      if term.match(/[a-zA-Z0-9]/)
+        location_keywords.push("#{term}")
+      end
+    end
   
     found_ids = {}
     sanitized_result = []
@@ -76,6 +83,14 @@ module SearchHelper
     location_found.each { |location|
       location_list.push(location.id)
     }
+    #try simmilar locations
+    location_keywords.each do |term|
+      location_found = Location.where("lower(name) like (:name)", {:name => term.downcase})
+      location_found.each { |location|
+        location_list.push(location.id)
+      }
+    end
+    
     Rails.logger.debug "Locations for simmilar search: #{location_list}"
     
     r = Spot.where((['name LIKE ?'] * keywords.size).join(' OR '), *keywords.map{ |key| "%#{key}%" }).where("country_id in (:countries) and location_id in (:locations)", {:countries => country_list, :locations => location_list}).limit(limit)
@@ -83,6 +98,14 @@ module SearchHelper
     result.each do |s| found_ids[s.id] = true end
     sanitized_result += SearchHelper.sanitize_spot_list(userid, result)
     sanitized_result.uniq!
+    #complete with research without location
+    if result.count < limit
+      r = Spot.where((['name LIKE ?'] * keywords.size).join(' OR '), *keywords.map{ |key| "%#{key}%" }).where("country_id in (:countries)", {:countries => country_list}).limit(limit)
+      result = r.to_a.reject {|s| s.blank? || found_ids[s.id]}
+      result.each do |s| found_ids[s.id] = true end
+      sanitized_result += SearchHelper.sanitize_spot_list(userid, result)
+      sanitized_result.uniq!
+    end
     Rails.logger.debug "found #{result.count} spots" and return sanitized_result[0...limit] if sanitized_result.length > limit
 
     return sanitized_result
