@@ -70,7 +70,6 @@ module SearchHelper
   
     found_ids = {}
     sanitized_result = []
-    batch_size = 50
     
     country_found = Country.where("lower(cname) in (:cname)", {:cname => country_name.downcase})
     country_list = []
@@ -84,12 +83,10 @@ module SearchHelper
       location_list.push(location.id)
     }
     #try simmilar locations
-    location_keywords.each do |term|
-      location_found = Location.where("lower(name) like (:name)", {:name => term.downcase})
-      location_found.each { |location|
-        location_list.push(location.id)
-      }
-    end
+    location_found = Location.where((['name LIKE ?'] * location_keywords.size).join(' OR '), *location_keywords.map{ |key| "%#{key}%" })
+    location_found.each { |location|
+      location_list.push(location.id)
+    }
     
     Rails.logger.debug "Locations for simmilar search: #{location_list}"
     
@@ -111,6 +108,42 @@ module SearchHelper
     return sanitized_result
   end
 
+  def SearchHelper.location_simmilar_search country_name, location_name, limit=20
+    if country_name.empty? || country_name == " " || location_name.empty? || location_name == " "  then return [] end
+    
+    location_keywords = []
+    location_name.split(" ").each do |term|
+      if term.match(/[a-zA-Z0-9]/) and term.length > 2
+        location_keywords.push("#{term}")
+      end
+    end
+  
+    found_ids = {}
+    sanitized_result = []
+    
+    country_found = Country.where("lower(cname) in (:cname)", {:cname => country_name.downcase})
+    country_list = []
+    country_found.each { |country|
+      country_list.push(country.id)
+    }
+    Rails.logger.debug "Countries for simmilar location search: #{country_list}"
+    location_found = Location.where("lower(name) in (:name) and country_id in(:countries)", {:name => location_name.downcase, :countries => country_list}).limit(limit)
+    location_found.each { |location|
+      sanitized_result.push(location)
+    }
+    if (sanitized_result.length<limit)
+      #try simmilar locations
+      location_found = Location.where((['name LIKE ?'] * location_keywords.size).join(' OR '), *location_keywords.map{ |key| "%#{key}%" }).limit(limit-sanitized_result.length)
+      location_found.each { |location|
+        sanitized_result.push(location)
+      }
+    end
+    
+    sanitized_result.uniq!
+
+    return sanitized_result
+  end
+  
   #search from lat and long given in degrees and a distance around in meters
   def SearchHelper.spot_geo_search userid, lat, long, distance=50_000.0, limit=50
     lat = (lat * 0.0174532925).to_f

@@ -303,6 +303,8 @@ function set_wizard_bindings(){
     wizard_gmaps_clear_simmilar_spots();
     $("#wizard_simmilar_spots").html("");
     $("#wizard_simmilar_spots_loader").hide();
+    $("#wizard_simmilar_locations").html("");
+    $("#wizard_simmilar_locations_loader").hide();
   });
   $("#wizard_spot_modspot").click(function(){
     wizard_spot_make_changeable(true);
@@ -353,6 +355,34 @@ function set_wizard_bindings(){
         }
       });
   });
+  function search_simmilar_locations() {
+	  $("#wizard_simmilar_locations_loader").show();
+	  $("#wizard_simmilar_locations").html("");
+	  $("#wizard_simmilar_locations").hide();
+	  $.ajax({
+	        url: '/api/search/simmilarlocation',
+	        data: {c:$("#spot-country").val(), n:$("#spot-location").val()},
+	        success: function(data){
+	        	$("#wizard_simmilar_locations_loader").hide();
+	        	locations = $.map(data.data, function(item){return {label: item.name , value: item.data.name, id: item.id } })
+	        	if (locations.length>0){
+		        	res = "<table style='border:0' class='spot_simmilar'>";
+		        	locations.forEach(function(element) {
+		        		res += "<tr onClick='select_simmilar_location(\""+element.value+"\")'><td>"+element.label+"</td></tr>";
+		        	});
+		        	res += "</table>";
+		        	$("#wizard_simmilar_locations").html(res);
+	        	} else {
+	        		$("#wizard_simmilar_locations").html(I18n.t(["js","wizard","No simmilar spot found. You can create one."]));
+	        	}
+	        	$("#wizard_simmilar_locations").show();
+	        }
+	      });
+  }
+  function select_simmilar_location(location_name) {
+	  $("#spot-location").val(location_name);
+	  $("#wizard_simmilar_locations").hide();
+  }
   $('#wizard_spot_confirm').click(function(){
     if( wizard_spot_datacheck()==false ){
       diveboard.notify(I18n.t(["js","wizard","Spot parameters"]), I18n.t(["js","wizard","ERROR: Cannot Save. Please correct the fields highlighted in red"]));
@@ -361,7 +391,7 @@ function set_wizard_bindings(){
     if (confirm(I18n.t(["js","wizard","Do you confirm the spot is not available?"]))) {
 	    wizard_spot_make_changeable(false);
 	    $('#wizard_search_spot').hide();
-	    $("#wizard_simmilar_spots_label, #wizard_simmilar_spots").hide();
+	    $("#wizard_simmilar_spots_label, #wizard_simmilar_spots, #wizard_simmilar_locations").hide();
 	    $("#wizard_spot_modspot, #wizard_spot_remove").css("display", "inline-block");
 	    $("#wizard_spot_creaspot").css("display", "inline-block");
 	    if (G_dive_spot_id == 1)
@@ -375,6 +405,7 @@ function set_wizard_bindings(){
     select_spot($("#spot-id").val());
     $("#wizard_simmilar_spots_label").hide();
     $("#wizard_simmilar_spots").hide();
+    $("#wizard_simmilar_locations").hide();
     wizard_gmaps_clear_simmilar_spots();
   });
 
@@ -401,7 +432,7 @@ function set_wizard_bindings(){
       $("#wizardgmaps_removepin").hide();
   });
 
-  $("#spot-location").change(function(){update_gmaps_from_wizard_edit(true);});
+  $("#spot-location").change(function(){update_gmaps_from_wizard_edit(true);search_simmilar_locations();});
   $("#spot-name").change(function(){update_gmaps_from_wizard_edit(true);});
   $("#spot-region").change(function(){update_gmaps_from_wizard_edit(false);});
   $("#spot-country").change(function(){update_gmaps_from_wizard_edit(true);});
@@ -1419,7 +1450,7 @@ function select_spot(spotid){
     $("#wizard_spot_modspot, #wizard_spot_remove").css("display", "inline-block");
   }
   $("#wizard_spot_creaspot").show();
-  $("#wizard_spot_confirm, #wizard_spot_cancel, #wizard_spot_search, #wizard_simmilar_spots_label, #wizard_simmilar_spots").hide();
+  $("#wizard_spot_confirm, #wizard_spot_cancel, #wizard_spot_search, #wizard_simmilar_spots_label, #wizard_simmilar_spots, #wizard_simmilar_locations").hide();
   if (G_dive_spot_id == 1)
     $("#wizard_spot_reset").hide();
   else

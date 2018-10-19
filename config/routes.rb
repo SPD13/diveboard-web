@@ -209,6 +209,7 @@ DiveBoard::Application.routes.draw do
   match '/api/search/region' => 'spotinfo#searchregion'
   match '/api/search/spot' => 'api#searchspot'
   match '/api/search/simmilarspot' => 'api#searchsimmilarspot'
+  match '/api/search/simmilarlocation' => 'api#searchsimmilarlocation'
   match '/api/search/shop' => 'spotinfo#searchshop'
   match '/api/search/user' => 'spotinfo#searchuser'
   match '/api/user/checkgravatar' => 'diveinfo#checkgravatar'
