@@ -329,6 +329,8 @@ function set_wizard_bindings(){
     $("#wizard_simmilar_spots_label").show();
     $("#wizard_simmilar_spots").html("");
     $("#wizard_simmilar_spots").hide();
+	wizard_gmaps_simmilar_highlightspotclear();
+	wizard_gmaps_clear_simmilar_spots();
     $.ajax({
         url: '/api/search/simmilarspot',
         data: {n: $("#spot-name").val(), c:$("#spot-country").val(), l:$("#spot-location").val()},
@@ -338,7 +340,7 @@ function set_wizard_bindings(){
         	if (spots.length>0){
 	        	res = "<table style='border:0' class='spot_simmilar'>";
 	        	spots.forEach(function(element) {
-	        		res += "<tr onmouseover='wizard_gmaps_simmilar_highlightspot("+element.lat+","+element.lng+")' onmouseout='wizard_gmaps_simmilar_highlightspotclear()'><td>"+element.label+"</td><td><button class='yellow_button' onClick='select_spot("+element.id+")'>"+I18n.t(["js","wizard","Select"])+"</button></td></tr>";
+	        		res += "<tr onmouseover='wizard_gmaps_simmilar_highlightspot("+element.lat+","+element.lng+")' onmouseout='wizard_gmaps_simmilar_highlightspotclear()' onClick='select_spot("+element.id+")'><td>"+element.label+"</td><td><button class='yellow_button' onClick='select_spot("+element.id+")'>"+I18n.t(["js","wizard","Select"])+"</button></td></tr>";
 		        	wizard_gmaps_simmilar_spots(element.lat, element.lng, element.id);
 	        	});
 	        	res += "</table>";
