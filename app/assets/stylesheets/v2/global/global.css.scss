@@ -841,6 +841,10 @@ body
 .spot_simmilar td {
 	padding: 0px;
 }
+.wizard_big_input:disabled {
+	background-color: #f6f6f6;
+}
+
 /* jQuery.Rating Plugin CSS - http://www.fyneworks.com/jquery/star-rating/ */
 div.rating-cancel,div.star-rating{float:left;width:17px;height:15px;text-indent:-999em;cursor:pointer;display:block;background:transparent;overflow:hidden}
 div.rating-cancel,div.rating-cancel a{background:url(/img/rating_delete.gif) no-repeat 0 -16px}
